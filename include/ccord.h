@@ -1,6 +1,7 @@
 #ifndef CCORD_H
 #define CCORD_H
 
+#include <stdlib.h>
 #include <stdbool.h>
 
 typedef struct CCORDcontext CCORDcontext;

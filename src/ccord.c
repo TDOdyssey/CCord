@@ -106,6 +106,8 @@ CCORDcontext *ccord_init(const char *token)
     }
     else
         return NULL;
+
+    ccord = malloc(sizeof(CCORDcontext));
     
     ccord->token = token;
     ccord->curl_get = get;
@@ -150,8 +152,11 @@ int ccord_request(CCORDcontext *ccord, CCORDrequestType type, const char *url, c
     };
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&args);
     
-    *recv = NULL;
-    *recv_size = 0;
+    if(recv)
+    {
+        *recv = NULL;
+        *recv_size = 0;
+    }
     CURLcode res = curl_easy_perform(curl);
             
     long http_code = 0;
