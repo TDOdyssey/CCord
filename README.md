@@ -17,3 +17,18 @@ I am also working on supporting voice connections through a UDP socket connectio
 The dependencies are the latest versions of curl, sodium, opus, and PortAudio. Specific required versions will be listed at a later date, when the library is closer to completion.
 
 The project is built in a cygwin environment and includes a makefile that builds the library as a .dll.
+
+## TODO
+
+### Refactoring
+✅ General CCord interface
+⬛ Gateway connection
+⬛ Event system
+
+### Finish implementation
+⬛ WebSockets should be able to handle multiple frames
+⬛ Add functions for common discord API operations
+⬛ Voice/audio system
+
+### General
+⬛ FIX: Gateway protocols do not disconnect properly and do not support resuming
