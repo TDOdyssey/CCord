@@ -6,6 +6,7 @@
 #include <curl/curl.h>
 #include <pthread.h>
 
+/*
 #define API_BASE "https://discord.com/api/v10"
 
 #define API_SEND_MSG APIBASE "/channels/%s"
@@ -35,11 +36,6 @@ typedef struct {
     char *data;
     size_t size;
 } CCORDresponse;
-
-typedef enum {
-    GET,
-    POST
-} CCORDrequestType;
 
 // TEMPP!!!!
 
@@ -75,6 +71,39 @@ CCORDresponse ccord_get(CCORD *ccord, const char *channel_id, int count);
 
 void ccord_cleanup(CCORD *ccord);
 
-void process_messages(const char *json_response);
+void process_messages(const char *json_response);*/
+
+// New interface
+
+
+// TODO move these out of the public header
+typedef enum {
+    DEFAULT,
+    VOICE
+} CCORDgatewayType;
+
+typedef struct {
+    CCORDgatewayType type;
+
+    CURL *ws; // Curl WebSocket
+
+    bool connected;
+    int heartbeat;
+
+    // Used for handling protocol state depending on type. TODO
+    uint8_t state_flags;
+} CCORDgateway;
+
+typedef struct CCORDcontext CCORDcontext;
+
+typedef enum {
+    GET,
+    POST
+} CCORDrequestType;
+
+CCORDcontext   *ccord_init(const char *token);
+int             ccord_login(CCORDcontext *ccord, int intents);
+int             ccord_request(CCORDcontext *ccord, CCORDrequestType type, const char *url, const char *send, size_t send_size, char **recv, size_t *recv_size);
+void            ccord_free(CCORDcontext *ccord);
 
 #endif
