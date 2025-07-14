@@ -22,12 +22,16 @@ The project is built in a cygwin environment and includes a makefile that builds
 
 ### Refactoring
 ✅ General CCord interface
+
 ⬛ Gateway connection
+
 ⬛ Event system
 
 ### Finish implementation
 ⬛ WebSockets should be able to handle multiple frames
+
 ⬛ Add functions for common discord API operations
+
 ⬛ Voice/audio system
 
 ### General
