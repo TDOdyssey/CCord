@@ -18,7 +18,13 @@ The dependencies are the latest versions of curl, sodium, opus, and PortAudio. S
 
 The project is built in a cygwin environment and includes a makefile that builds the library as a .dll.
 
+## Usage
+
+The project is currently undergoing big changes which include a lot of restructering of existing code. The only thing supported right now is sending and receiving payloads from discord's rest API. This is done by initializing the library with `ccord_init`, which requires a token as input and returns an opaque context pointer. To make a request, use `ccord_request`. At the moment, you have to write your payload manually into a buffer. This function has a lot of details and edge-cases, and more documentation will be provided at a later date. You will also have to free the context pointer by calling `ccord_free`.
+
 ## TODO
+
+Once the gateway event system has been rewritten, the next goal will be to provide wrapper structures and functions for handling discord JSON objects, including messages, channels, guilds, etc.
 
 ### Refactoring
 ✅ General CCord interface

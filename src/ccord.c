@@ -23,17 +23,17 @@ typedef struct {
 
     CURL *ws; // Curl WebSocket
 
-    bool connected;
     int heartbeat;
-
-    // Used for handling protocol state depending on type. TODO
+    
+    // Used for handling protocol state depending on type. TODO (include connected bool?)
     uint8_t state_flags;
+    bool connected;
 } CCORDgateway;
 
 typedef struct CCORDcontext {
     const char *token;
 
-    // Separate curl contexts so we don't have to constantly update headers of a single curl context
+    // Separate curl contexts so we don't have to update headers
     CURL *curl_get;
     CURL *curl_post;
     struct curl_slist *headers;
