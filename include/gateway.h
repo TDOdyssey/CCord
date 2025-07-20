@@ -4,48 +4,40 @@
 #include <stdbool.h>
 
 #include "cJSON.h"
-#include "websocket.h"
+#include <curl/curl.h>
 
-#define CCORD_GATEWAY_DEFAULT_URL "wss://gateway.discord.gg/?v=10&encoding=json"
-#define CCORD_GATEWAY_HEARTBEAT_FORMAT "{\"op\":1,\"d\":%s}"
-
-#define CCORD_MAX_CALLBACKS 64
-
-typedef void (*gateway_event_cb)(cJSON *payload);
+typedef enum {
+    GW_DEFAULT,
+    GW_VOICE
+} CCORDgatewayType;
 
 typedef struct {
-    const char *event_name;
-    gateway_event_cb callback;
-} event_cb_registry_entry_t;
+    CCORDgatewayType type;
 
-typedef struct {
-    event_cb_registry_entry_t entries[CCORD_MAX_CALLBACKS];
-    int count;
-} gateway_event_cb_registry_t;
-
-typedef struct {
-    websocket_t *ws;
-    const char *token;
-
-    gateway_event_cb_registry_t registry;
-
-    int intents;
-    bool closed;
+    CURL *ws; // Curl WebSocket
 
     int heartbeat;
-    long next_heartbeat;
+    bool close; // set to true if client wants gateway to gracefully shutdown
+    
+    // Used for handling protocol state
+    // Bit  Flag
+    // 0    Hello
+    // 1    ACK
+    // 2    Ready
+    uint8_t state_flags;
 
-    bool hello;
-    bool ack;
-    int event;
-} gateway_t;
+    pthread_t thread;
+    pthread_mutex_t lock;
+    
+    char endpoint[256];
+    char resume[256];
 
-gateway_t gateway_init(const char *token, int intents);
+    char token[256];
+    int intents;
+} CCORDgateway;
 
-void gateway_update(gateway_t *gw);
+int ccord_gateway_init(CCORDgateway *gw, const char *endpoint, const char *token, int intents);
 
-void gateway_close(gateway_t *gw);
-
-void gateway_register_event(gateway_t *gw, const char *event_name, gateway_event_cb cb);
+//TODO: void ccord_gateway_close(CCORDgateway *gw);
 
 #endif

@@ -187,7 +187,7 @@ void ccord_free(CCORDcontext *ccord)
     curl_slist_free_all(ccord->headers);
     curl_global_cleanup();
 
-    // TODO: gateway cleanup? (or write another function?) probably best to have it all here...
+    // TODO: gateway cleanup
 
     free(ccord);
 }
