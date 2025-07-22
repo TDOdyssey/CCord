@@ -1,4 +1,7 @@
 #include "ccord.h"
+#include "ccord_internal.h"
+
+#include "event.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,37 +14,6 @@
 #include <curl/curl.h>
 
 #include "cJSON.h"
-
-// TODO move these into gateway.h
-typedef enum {
-    DEFAULT,
-    VOICE
-} CCORDgatewayType;
-
-typedef struct {
-    CCORDgatewayType type;
-
-    CURL *ws; // Curl WebSocket
-
-    int heartbeat;
-    
-    // Used for handling protocol state depending on type. TODO (include connected bool?)
-    uint8_t state_flags;
-    bool connected;
-} CCORDgateway;
-
-typedef struct CCORDcontext {
-    const char *token;
-
-    // Separate curl contexts so we don't have to update headers
-    CURL *curl_get;
-    CURL *curl_post;
-    struct curl_slist *headers;
-
-    // Gateway
-    CCORDgateway gateway;
-    CCORDgateway voice_gateway;
-} CCORDcontext;
 
 struct write_cb_args {
     char **recv;
@@ -85,7 +57,7 @@ CCORDcontext *ccord_init(const char *token)
 
     struct curl_slist *headers = NULL;
     headers = curl_slist_append(headers, buffer);
-    headers = curl_slist_append(headers, "Content-Type: application/json");;
+    headers = curl_slist_append(headers, "Content-Type: application/json");
 
     get = curl_easy_init();
     post = curl_easy_init();
@@ -115,7 +87,8 @@ CCORDcontext *ccord_init(const char *token)
     ccord->headers = headers;
     ccord->gateway = (CCORDgateway){0};
     ccord->voice_gateway = (CCORDgateway){0};
-    
+    memset(ccord->event_handles, 0, sizeof(ccord->event_handles));
+
     return ccord;
 }
 

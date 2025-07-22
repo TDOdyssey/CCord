@@ -94,8 +94,6 @@ gateway_event_payload_t deserialize_packet(char *packet, size_t packet_size)
     memcpy(packet_str, packet, packet_size);
     packet_str[packet_size] = '\0';
 
-    printf("%s\n", packet_str);
-
     gateway_event_payload_t payload = {0};
     cJSON *root = cJSON_Parse(packet_str);
 
@@ -134,10 +132,9 @@ int gateway_send_payload(CCORDgateway *gw, char *payload, size_t size)
     if(res != CURLE_OK) {
         fprintf(stderr, "[Gateway] Frame sending failed: %s\n", curl_easy_strerror(res));
         return -1;
-    } else {
-        printf("[Gateway] Frame sending: %s\n", payload);
-        return 0;
     }
+
+    return 0;
 }
 
 int gateway_heartbeat(CCORDgateway *gw, int event)
@@ -180,6 +177,7 @@ void *gateway_thread(void *arg)
             if(res != CURLE_OK)
                 break;
 
+            // When frame buffer size isn't big enough to read the entire frame, increase size of frame buffer
             while(meta->bytesleft > 0)
             {
                 frame_buf_size *= 2;
@@ -191,18 +189,18 @@ void *gateway_thread(void *arg)
             
             if(!(meta->flags & CURLWS_CONT))
                 break;
+            
+            // If we make it to the end of the loop, there is another frame to read
         }
         // -------------------------
 
         if(res == CURLE_AGAIN) {
-            usleep(10000);
+            //usleep(10000);
         } else if(res != CURLE_OK) {
             // TODO: handle this error gracefully
             break;
         } else {
             gateway_event_payload_t payload = deserialize_packet(frame_buf, buf_ptr - frame_buf);
-
-            printf("op: %d\n\ns: %d\nt: %s\n", payload.op, payload.s, payload.t);
 
             if(payload.s != -1)
                 event = payload.s;
@@ -216,7 +214,13 @@ void *gateway_thread(void *arg)
             switch(payload.op)
             {
                 case CCORDGW_DISPATCH: // Dispatch TODO
-                    printf("DISPATCH: %s\n", payload.t);
+                    pthread_mutex_lock(&gw->events_lock);
+
+                    if(gw->events_count < MAX_EVENTS_IN_QUEUE)
+                        gw->events[gw->events_count++] = (dispatch_event_t){event_type_from_str(payload.t), payload.d};
+
+                    pthread_mutex_unlock(&gw->events_lock);
+
                     break;
                 case CCORDGW_HEARTBEAT: // Heartbeat
                     gateway_heartbeat(gw, event);
@@ -244,7 +248,8 @@ void *gateway_thread(void *arg)
                     break;
             }
 
-            cJSON_Delete(payload.d);
+            if(payload.op != CCORDGW_DISPATCH)
+                cJSON_Delete(payload.d);
         }
 
         // TODO: Reconnect logic... (triggered by flag?)
@@ -294,6 +299,7 @@ int ccord_gateway_init(CCORDgateway *gw, const char *endpoint, const char *token
     gw->close = false;
     gw->state_flags = 0b00000000;
     gw->lock = PTHREAD_MUTEX_INITIALIZER;
+    gw->events_lock = PTHREAD_MUTEX_INITIALIZER;
     gw->intents = intents;
     strcpy(gw->token, token);
     strcpy(gw->endpoint, endpoint);
