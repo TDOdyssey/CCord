@@ -20,23 +20,68 @@ The project is built in a cygwin environment and includes a makefile that builds
 
 ## Usage
 
-The project is currently undergoing big changes which include a lot of restructering of existing code. The only thing supported right now is sending and receiving payloads from discord's rest API. This is done by initializing the library with `ccord_init`, which requires a token as input and returns an opaque context pointer. To make a request, use `ccord_request`. At the moment, you have to write your payload manually into a buffer. This function has a lot of details and edge-cases, and more documentation will be provided at a later date. You will also have to free the context pointer by calling `ccord_free`.
+The project is currently undergoing big changes which include a lot of restructering of existing code. The library now supports sending and receiving JSON payloads from discord's rest API, and also supports connecting to the discord gateway and receiving events from it.
+
+Here is an example program that shows how to use the library:
+```
+#include "../include/ccord.h"
+#include "../include/gateway.h"
+
+#include <stdlib.h>
+
+#define TOKEN "Bot YOUR_TOKEN_HERE"
+#define CHANNEL_ID "YOUR_CHANNELID_HERE"
+
+void on_ready(cJSON *data)
+{
+    printf("Bot is ready!\n");
+}
+
+void on_message(cJSON *data)
+{
+    printf("Message!\n> %s\n", cJSON_GetObjectItemCaseSensitive(data, "content")->valuestring);
+}
+
+int main()
+{
+    CCORDcontext *cc = ccord_init(TOKEN);
+
+    char *url = "https://discord.com/api/v10/channels/" CHANNEL_ID "/messages";
+    char *json_payload = "{\"content\": \"Hello!\"}";
+
+    ccord_request(cc, POST, url, json_payload, strlen(json_payload), NULL, NULL);
+
+    cc->gateway = (CCORDgateway){.type = GW_DEFAULT};
+
+    ccord_register_on_ready(cc, on_ready);
+    ccord_register_on_message_create(cc, on_message);
+
+    int res = ccord_gateway_init(&cc->gateway, "wss://gateway.discord.gg/?v=10&encoding=json", TOKEN, GUILDS | GUILD_MESSAGES | MESSAGE_CONTENT);
+    if(res != 0)
+    {
+        printf("ERROR!\n");
+    }
+
+    while(1)
+    {
+        ccord_dispatch_events(cc);
+        sleep(1);
+    }
+
+    ccord_free(cc);
+    return 0;
+}
+```
+Eventually, the gateway will be automatically initiated by CCORD. Event handles require cJSON input parameters, but in the future, these will be replaced with the library's own implementaiton of Discord's API JSON objects.
 
 ## TODO
 
-Once the gateway event system has been rewritten, the next goal will be to provide wrapper structures and functions for handling discord JSON objects, including messages, channels, guilds, etc.
-
-### Refactoring
-✅ General CCord interface
-
-⬛ Gateway connection
-
-⬛ Event system
+The next goal will be to provide wrapper structures and functions for handling discord JSON objects, including messages, channels, guilds, etc.
 
 ### Finish implementation
-⬛ WebSockets should be able to handle multiple frames
-
 ⬛ Add functions for common discord API operations
+
+⬛ Add custom data structures for JSON objects
 
 ⬛ Voice/audio system
 

@@ -213,7 +213,7 @@ void *gateway_thread(void *arg)
 
             switch(payload.op)
             {
-                case CCORDGW_DISPATCH: // Dispatch TODO
+                case CCORDGW_DISPATCH: // Dispatch
                     pthread_mutex_lock(&gw->events_lock);
 
                     if(gw->events_count < MAX_EVENTS_IN_QUEUE)
@@ -231,7 +231,7 @@ void *gateway_thread(void *arg)
                     break;
                 case CCORDGW_INVALID_SESSION: // Invalid Session TODO
                     break;
-                case CCORDGW_HELLO: // Hello TODO
+                case CCORDGW_HELLO: // Hello
                     gw->heartbeat = cJSON_GetObjectItemCaseSensitive(payload.d, "heartbeat_interval")->valueint;
 
                     next_heartbeat = current_time_ms() + (rand() % (gw->heartbeat + 1));
